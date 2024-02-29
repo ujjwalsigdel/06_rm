@@ -280,6 +280,7 @@ This model **decreased AIC** but **increased BIC** compared to the default model
 mod4_ar1 <- lme(
   yield_kgha ~ krate_kgha*nrate_kgha*fdap,
   random = ~ 1|block/krate_kgha/nrate_kgha,
+  correlation = corAR1(form = ~ dap),
 
   data = rm_rcbd_df)
 
@@ -314,7 +315,7 @@ AR1 model had the same dfs and fit metrics as the CS model.
 mod5_arma11 <- lme(
   yield_kgha ~ krate_kgha*nrate_kgha*fdap,
   random = ~ 1|block/krate_kgha/nrate_kgha,
-
+  correlation = corARMA(p = 1, q = 1),
   data = rm_rcbd_df)
 
 mod5_arma11
@@ -348,7 +349,7 @@ Let's fit our first **spatial** correlation structure.
 mod6_exp <- lme(
   yield_kgha ~ krate_kgha*nrate_kgha*fdap,
   random = ~ 1|block/krate_kgha/nrate_kgha,
-
+  correlation = corExp(form = ~dap),
   data = rm_rcbd_df)
 
 mod6_exp
@@ -380,7 +381,7 @@ A few things to notice:
 ```{r}
 intervals(mod6_exp, which = "var-cov")
 ```
-range interval does not include 0, so it is significant.
+range interval does not include 0, so it is significant, but highly variable.
 
 ## comparison
 ```{r}
@@ -397,7 +398,7 @@ Thus, our best candidate remains model 3 (general).
 mod7_gaus <- lme(
   yield_kgha ~ krate_kgha*nrate_kgha*fdap,
   random = ~ 1|block/krate_kgha/nrate_kgha,
-
+  correlation = corGaus(form = ~dap),
   data = rm_rcbd_df)
 
 mod7_gaus
@@ -439,7 +440,7 @@ Thus, our best candidate remains model 3 (general).
 mod8_lin <- lme(
   yield_kgha ~ krate_kgha*nrate_kgha*fdap,
   random = ~ 1|block/krate_kgha/nrate_kgha,
-
+  correlation = corLin(form = ~dap),
   data = rm_rcbd_df)
 
 mod8_lin
@@ -483,7 +484,7 @@ Thus, our best candidate remains model 3 (general).
 mod9_rq <- lme(
   yield_kgha ~ krate_kgha*nrate_kgha*fdap,
   random = ~ 1|block/krate_kgha/nrate_kgha,
-
+  correlation = corRatio(form = ~dap),
   data = rm_rcbd_df)
 
 mod9_rq
@@ -526,7 +527,7 @@ Thus, our best candidate remains model 3 (general).
 mod10_sph <- lme(
   yield_kgha ~ krate_kgha*nrate_kgha*fdap,
   random = ~ 1|block/krate_kgha/nrate_kgha,
-
+  correlation = corSpher(form = ~dap),
   data = rm_rcbd_df)
 
 mod10_sph
@@ -557,7 +558,13 @@ range interval does not include 0, so it is significant.
 ```{r}
 anova(mod1_default, 
       mod2_cs, mod3_gen, mod4_ar1, mod5_arma11,
-      mod6_exp, mod7_gaus, mod8_lin, mod9_rq, mod10_sph) 
+      mod6_exp, mod7_gaus, mod8_lin, mod9_rq, mod10_sph) %>%
+  as.data.frame() %>% 
+  rownames_to_column(var = "modelname") %>% 
+  janitor::clean_names() %>% 
+  dplyr::select(modelname, model, df, aic, bic) %>% 
+  arrange(aic) %>% 
+  arrange(bic)
 
 ```
 After fitting the default model and comparing it to other 9 models that included serial and spatial correlation structures, we found that:  
